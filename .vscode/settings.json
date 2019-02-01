@@ -3,8 +3,5 @@
     "python.linting.enabled": true,
     "python.formatting.provider": "black",
     "editor.formatOnSave": true,
-    "python.linting.pylintUseMinimalCheckers": false,
-    "python.linting.pylintArgs": [
-        "--disable=C0111"
-    ]
+    "python.linting.pylintUseMinimalCheckers": false
 }
