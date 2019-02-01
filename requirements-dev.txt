@@ -1,4 +1,10 @@
+# Include TOP-LEVEL developer dependencies in this file.
+# Do NOT pipe `pip freeze` to this file.
+
+# Do not remove line below; it installs the main dependencies
 -r requirements.txt
-black
-mypy
-pylint
+
+# Dev dependencies:
+black==18.9b0
+mypy==0.660
+pylint==2.2.2
