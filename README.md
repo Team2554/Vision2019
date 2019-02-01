@@ -18,4 +18,4 @@ pip install -r requirements-dev.txt
 
 ### Updating Dependencies
 
-Change appropriate version in `requirements-to-freeze.txt`.
+Change appropriate version in `requirements-to-freeze.txt` / `requirements-dev.txt`.
