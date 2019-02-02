@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import cv2
 import numpy
 import math
@@ -45,48 +43,4 @@ class VisionPipeline:
         return cv2.inRange(out, (red[0], green[0], blue[0]),  (red[1], green[1], blue[1]))
 
 
-import networktables
-from networktables import NetworkTableInstance
 
-def extra_processing(pipeline):
-    center_x_positions = []
-    center_y_positions = []
-
-    widths = []
-    heights = []
-
-    for contour in pipeline.filter_countours_output:
-        x, y, w, h = cv2.boundingRect(countour)
-        center_x_positions.append(x + w / 2)
-        center_y_positions.append(y + h / 2)
-        widths.append(w)
-        heights.append(h)
-    
-    table = NetworkTable.getTable('/vision')
-    table.putValue('centerX', NumberArray.from_list(center_x_positions))
-    table.putValue('centerY', NumberArray.from_list(center_y_positions))
-    table.putValue('width', NumberArray.from_list(widths))
-    table.putValue('height', NumberArray.from_list(heights))
-
-def main():
-    print('Initializing')
-    NetworkTable.setClientMode()
-    NetworkTable.setIPAddress('localhost')
-    NetworkTable.initialize()
-
-    print('Video capture')
-    cap = cv2.VideoCapture(0)
-
-    print('Creating pipeline')
-    pipeline = VisionPipeline()
-
-    while cap.isOpened():
-        have_frame, frame = cap.read()
-        if have_frame:
-            pipeline.process(frame)
-            extra_processing(pipeline)
-    
-    print('Capture closed')
-
-if __name__ == "__main__":
-    main()
