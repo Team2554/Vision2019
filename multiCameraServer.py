@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-#----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # Copyright (c) 2018 FIRST. All Rights Reserved.
 # Open Source Software - may be modified and shared by FRC teams. The code
 # must be accompanied by the FIRST BSD license file in the root directory of
 # the project.
-#----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
 import json
 import time
@@ -48,17 +48,25 @@ from networktables import NetworkTablesInstance
 
 configFile = "/boot/frc.json"
 
-class CameraConfig: pass
+
+class CameraConfig:
+    pass
+
 
 team = None
 server = False
 cameraConfigs = []
 
 """Report parse error."""
+
+
 def parseError(str):
     print("config error in '" + configFile + "': " + str, file=sys.stderr)
 
+
 """Read single camera configuration."""
+
+
 def readCameraConfig(config):
     cam = CameraConfig()
 
@@ -84,7 +92,10 @@ def readCameraConfig(config):
     cameraConfigs.append(cam)
     return True
 
+
 """Read configuration file."""
+
+
 def readConfig():
     global team
     global server
@@ -131,7 +142,10 @@ def readConfig():
 
     return True
 
+
 """Start running the camera."""
+
+
 def startCamera(config):
     print("Starting camera '{}' on {}".format(config.name, config.path))
     inst = CameraServer.getInstance()
@@ -145,6 +159,7 @@ def startCamera(config):
         server.setConfigJson(json.dumps(config.streamConfig))
 
     return camera
+
 
 if __name__ == "__main__":
     if len(sys.argv) >= 2:
