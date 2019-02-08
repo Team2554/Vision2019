@@ -546,7 +546,7 @@ def main():
         for name, data in processedData.items():
             network_table.getEntry(name).setValue(data)
 
-        # outputStream.putFrame(processed)/
+        outputStream.putFrame(frame.copy())
 
 
 if __name__ == "__main__":
