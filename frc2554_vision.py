@@ -526,7 +526,7 @@ def main():
         ninst.startServer()
     else:
         print("Setting up NetworkTables client")
-        ninst.startClient()
+        ninst.startClient(team)
 
     network_table = ninst.getTable("Shuffleboard").getSubTable("Vision")
     network_table.getEntry("connected").setValue(True)
