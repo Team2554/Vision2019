@@ -1,4 +1,22 @@
 #!/usr/bin/env python3
+
+# ---------------------------------------- #
+#             Begin GRIP Pipeline          #
+# ---------------------------------------- #
+
+# Sagar put the GRIP pipeline code here
+class VisionPipeline:
+    pass
+
+
+# ---------------------------------------- #
+#             End GRIP Pipeline            #
+# ---------------------------------------- #
+
+# ---------------------------------------- #
+#             Begin FRC Template           #
+# ---------------------------------------- #
+
 # ----------------------------------------------------------------------------
 # Copyright (c) 2018 FIRST. All Rights Reserved.
 # Open Source Software - may be modified and shared by FRC teams. The code
@@ -149,40 +167,115 @@ def readConfig():
 def startCamera(config):
     print("Starting camera '{}' on {}".format(config.name, config.path))
     inst = CameraServer.getInstance()
-    camera = UsbCamera(config.name, config.path)
-    server = inst.startAutomaticCapture(camera=camera, return_server=True)
-
+    camera = inst.startAutomaticCapture(name=config.name, path=config.path)
     camera.setConfigJson(json.dumps(config.config))
-    camera.setConnectionStrategy(VideoSource.ConnectionStrategy.kKeepOpen)
 
-    if config.streamConfig is not None:
-        server.setConfigJson(json.dumps(config.streamConfig))
+    return inst, camera
+    # camera = UsbCamera(config.name, config.path)
+    # server = inst.startAutomaticCapture(camera=camera, return_server=True)
 
-    return camera
+    # camera.setConfigJson(json.dumps(config.config))
+    # camera.setConnectionStrategy(VideoSource.ConnectionStrategy.kKeepOpen)
+
+    # if config.streamConfig is not None:
+    #     server.setConfigJson(json.dumps(config.streamConfig))
+
+    # return camera
 
 
-if __name__ == "__main__":
+# ---------------------------------------- #
+#             End FRC Template             #
+# ---------------------------------------- #
+
+# ---------------------------------------- #
+#             Begin Our Code               #
+# ---------------------------------------- #
+
+import cv2
+import numpy as np
+import sys
+import time
+
+
+# ---------------------------------------- #
+#          Begin OpenCV Processing         #
+# ---------------------------------------- #
+
+
+def processOpenCV(arguments, frame):
+    pass
+
+
+# ---------------------------------------- #
+#           End OpenCV Processing          #
+# ---------------------------------------- #
+
+
+def main():
     if len(sys.argv) >= 2:
         configFile = sys.argv[1]
 
-    # read configuration
     if not readConfig():
+        print("Unable to read config file!")
         sys.exit(1)
-
-    # start NetworkTables
-    ntinst = NetworkTablesInstance.getDefault()
-    if server:
-        print("Setting up NetworkTables server")
-        ntinst.startServer()
-    else:
-        print("Setting up NetworkTables client for team {}".format(team))
-        ntinst.startClientTeam(team)
 
     # start cameras
     cameras = []
-    for cameraConfig in cameraConfigs:
-        cameras.append(startCamera(cameraConfig))
+    streams = []
 
-    # loop forever
+    image_width = 640
+    image_height = 480
+
+    grip = VisionPipeline()
+
+    for cameraConfig in cameraConfigs:
+        # cameras.append(startCamera(cameraConfig))
+        cs, cameraCapture = startCamera(cameraConfig)
+        streams.append(cs)
+        cameras.append(cameraCapture)
+
+    # First camera is server
+    cameraServer = streams[0]
+
+    # Set up a CV Sink to capture video
+    cvSink = cameraServer.getVideo()
+
+    # CvSource
+    outputStream = cameraServer.putVideo("stream", image_width, image_height)
+
+    img = np.zeros(shape=(image_height, image_width, 3), dtype=np.uint8)
+
+    # Networktables
+    ninst = NetworkTablesInstance.getDefault()
+    if server:
+        print("Setting up NetworkTables server")
+        ninst.startServer()
+    else:
+        print("Setting up NetworkTables client")
+        ninst.startClient()
+
+    network_table = ninst.getTable("Shuffleboard").getSubTable("Vision")
+    network_table.getEntry("connected").setValue(True)
+
+    time.sleep(0.1)
+
     while True:
-        time.sleep(10)
+        timestamp, img = cvSink.grabFrame(img)
+        frame = img
+
+        if timestamp == 0:
+            outputStream.notifyError(cvSink.getError())
+            continue
+
+        grip.process(frame)
+        processed = processOpenCV([grip.filter_contours_output], frame)
+
+        outputStream.putFrame(processed)
+
+
+if __name__ == "__main__":
+    main()
+
+# ---------------------------------------- #
+#             End Our Code                 #
+# ---------------------------------------- #
