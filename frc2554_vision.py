@@ -202,7 +202,7 @@ import time
 # ---------------------------------------- #
 
 
-def processOpenCV(contours, frame):
+def processOpenCV(arguments, frame):
     pass
 
 
@@ -268,7 +268,7 @@ def main():
             continue
 
         grip.process(frame)
-        processed = processOpenCV(grip.filter_contours_output, frame)
+        processed = processOpenCV([grip.filter_contours_output], frame)
 
         outputStream.putFrame(processed)
 
