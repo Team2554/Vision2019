@@ -320,7 +320,7 @@ class CameraConfig:
     pass
 
 
-team = None
+team = 2554
 server = False
 cameraConfigs = []
 
