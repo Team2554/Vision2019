@@ -456,28 +456,29 @@ IMG_CENTER = (IMG_WIDTH - 1) // 2
 
 
 def processOpenCV(contours):
-    cnts = list(sorted(contours, key=lambda x: cv2.contourArea(x)))
-    cnt1 = cnts[-1]
-    cnt2 = cnts[-2]
+    # cnts = list(sorted(contours, key=lambda x: cv2.contourArea(x)))
+    # cnt1 = cnts[-1]
+    # cnt2 = cnts[-2]
 
-    M1 = cv2.moments(cnt1)
-    M2 = cv2.moments(cnt2)
+    # M1 = cv2.moments(cnt1)
+    # M2 = cv2.moments(cnt2)
 
-    center1 = (int(M1["m10"] / M1["m00"]), int(M1["m01"] / M1["m00"]))
-    center2 = (int(M2["m10"] / M2["m00"]), int(M2["m01"] / M2["m00"]))
+    # center1 = (int(M1["m10"] / M1["m00"]), int(M1["m01"] / M1["m00"]))
+    # center2 = (int(M2["m10"] / M2["m00"]), int(M2["m01"] / M2["m00"]))
 
-    midpoint = ((center1[0] + center2[0]) / 2, (center1[1] + center2[1]) / 2)
+    # midpoint = ((center1[0] + center2[0]) / 2, (center1[1] + center2[1]) / 2)
 
-    yawAngle = (midpoint[0] - IMG_CENTER) * DEG_PER_PIXEL
+    # yawAngle = (midpoint[0] - IMG_CENTER) * DEG_PER_PIXEL
 
-    output = {
-        "center1": center1,
-        "center2": center2,
-        "midpoint": midpoint,
-        "yaw_angle": yawAngle,
-    }
+    # output = {
+    #     "center1": center1,
+    #     "center2": center2,
+    #     "midpoint": midpoint,
+    #     "yaw_angle": yawAngle,
+    # }
 
-    return output
+    # return output
+    print("Processing OpenCV")
 
 
 # ---------------------------------------- #
@@ -486,6 +487,8 @@ def processOpenCV(contours):
 
 
 def main():
+    global configFile
+
     if len(sys.argv) >= 2:
         configFile = sys.argv[1]
 
@@ -501,6 +504,8 @@ def main():
     image_height = 480
 
     grip = VisionPipeline()
+
+    print("Initialized vision stuff")
 
     for cameraConfig in cameraConfigs:
         # cameras.append(startCamera(cameraConfig))
@@ -525,8 +530,8 @@ def main():
         print("Setting up NetworkTables server")
         ninst.startServer()
     else:
-        print("Setting up NetworkTables client")
-        ninst.startClient()
+        print("Setting up NetworkTables client for team {}".format(team))
+        ninst.startClientTeam(team)
 
     network_table = ninst.getTable("Shuffleboard").getSubTable("Vision")
     network_table.getEntry("connected").setValue(True)
@@ -542,9 +547,10 @@ def main():
             continue
 
         grip.process(frame)
-        processedData = processOpenCV(grip.filter_contours_output)
-        for name, data in processedData.items():
-            network_table.getEntry(name).setValue(data)
+        processOpenCV(None)
+        # processedData = processOpenCV(grip.filter_contours_output)
+        # for name, data in processedData.items():
+        #     network_table.getEntry(name).setValue(data)
 
         outputStream.putFrame(frame.copy())
 
