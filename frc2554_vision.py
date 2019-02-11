@@ -456,29 +456,31 @@ IMG_CENTER = (IMG_WIDTH - 1) // 2
 
 
 def processOpenCV(contours):
-    # cnts = list(sorted(contours, key=lambda x: cv2.contourArea(x)))
-    # cnt1 = cnts[-1]
-    # cnt2 = cnts[-2]
+    if len(contours) < 2:
+        return None
 
-    # M1 = cv2.moments(cnt1)
-    # M2 = cv2.moments(cnt2)
+    cnts = list(sorted(contours, key=lambda x: cv2.contourArea(x)))
+    cnt1 = cnts[-1]
+    cnt2 = cnts[-2]
 
-    # center1 = (int(M1["m10"] / M1["m00"]), int(M1["m01"] / M1["m00"]))
-    # center2 = (int(M2["m10"] / M2["m00"]), int(M2["m01"] / M2["m00"]))
+    M1 = cv2.moments(cnt1)
+    M2 = cv2.moments(cnt2)
 
-    # midpoint = ((center1[0] + center2[0]) / 2, (center1[1] + center2[1]) / 2)
+    center1 = (int(M1["m10"] / M1["m00"]), int(M1["m01"] / M1["m00"]))
+    center2 = (int(M2["m10"] / M2["m00"]), int(M2["m01"] / M2["m00"]))
 
-    # yawAngle = (midpoint[0] - IMG_CENTER) * DEG_PER_PIXEL
+    midpoint = ((center1[0] + center2[0]) / 2, (center1[1] + center2[1]) / 2)
 
-    # output = {
-    #     "center1": center1,
-    #     "center2": center2,
-    #     "midpoint": midpoint,
-    #     "yaw_angle": yawAngle,
-    # }
+    yawAngle = (midpoint[0] - IMG_CENTER) * DEG_PER_PIXEL
 
-    # return output
-    print("Processing OpenCV")
+    output = {
+        "center1": center1,
+        "center2": center2,
+        "midpoint": midpoint,
+        "yaw_angle": yawAngle,
+    }
+
+    return output
 
 
 # ---------------------------------------- #
@@ -547,10 +549,11 @@ def main():
             continue
 
         grip.process(frame)
-        processOpenCV(None)
-        # processedData = processOpenCV(grip.filter_contours_output)
-        # for name, data in processedData.items():
-        #     network_table.getEntry(name).setValue(data)
+        processedData = processOpenCV(grip.filter_contours_output)
+
+        if processedData is not None:
+            for name, data in processedData.items():
+                network_table.getEntry(name).setValue(data)
 
         outputStream.putFrame(frame.copy())
 
