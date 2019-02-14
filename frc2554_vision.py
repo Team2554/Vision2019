@@ -416,10 +416,14 @@ def readConfig():
 def startCamera(config):
     print("Starting camera '{}' on {}".format(config.name, config.path))
     inst = CameraServer.getInstance()
-    camera = inst.startAutomaticCapture(name=config.name, path=config.path)
-    camera.setConfigJson(json.dumps(config.config))
+    camera = UsbCamera(config.name, config.path)
 
-    return inst, camera
+    server = inst.startAutomaticCapture(camera=camera, return_server=True)
+
+    camera.setConfigJson(json.dumps(config.config))
+    camera.setConnectionStrategy(VideoSource.ConnectionStrategy.kKeepOpen)
+
+    return inst, camera, server
     # camera = UsbCamera(config.name, config.path)
     # server = inst.startAutomaticCapture(camera=camera, return_server=True)
 
@@ -511,7 +515,7 @@ def main():
 
     for cameraConfig in cameraConfigs:
         # cameras.append(startCamera(cameraConfig))
-        cs, cameraCapture = startCamera(cameraConfig)
+        cs, cameraCapture, _ = startCamera(cameraConfig)
         streams.append(cs)
         cameras.append(cameraCapture)
 
