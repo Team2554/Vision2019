@@ -422,14 +422,15 @@ CENTER_HEIGHT_PIXEL = (IMAGE_HEIGHT - 1) // 2
 
 def processOpenCV(img, contours):
     new_image = img.copy()
-    angle = "-420 haha gotem" #if there is no angle. Arnav please don't delete.
+
+    # The following code is Sagar's not mine
+    angle = "-420 haha gotem"  # if there is no angle. Arnav please don't delete.
     center1 = (21, 69)
     center2 = (420, 666)
     center_of_centers = ("hi neeraj good job driving", "lmao please don't roast me")
+    # End Sagar's attempt at humor
 
     target_exists = False
-
-    output = {}
 
     # Draw the center of the image
     center_of_image = (CENTER_WIDTH_PIXEL, CENTER_HEIGHT_PIXEL)
@@ -438,7 +439,6 @@ def processOpenCV(img, contours):
     )
 
     if len(contours) >= 2:
-
         target_exists = True
 
         # Sort to get the two biggest contours
@@ -499,12 +499,15 @@ def processOpenCV(img, contours):
         # Draw a line from the center of image to the center of centers
         cv2.line(new_image, center_of_centers, center_of_image, (255, 0, 0), 3)
 
-    output["target_exists"] = target_exists
-    output["center1"] = center1
-    output["center2"] = center2
-    output["midpoint"] = center_of_centers
-    output["yaw_angle"] = angle
-    return new_image, output
+    shuffleboard_data = {
+        "target_exists": target_exists,
+        "center1": center1,
+        "center2": center2,
+        "midpoint": center_of_centers,
+        "yaw_angle": angle,
+    }
+
+    return new_image, shuffleboard_data
 
 
 # ---------------------------------------- #
@@ -573,13 +576,12 @@ def main():
             continue
 
         grip.process(frame)
-        drawn_image, processedData = processOpenCV(frame, grip.filter_contours_output)
+        new_image, shuffleboard_data = processOpenCV(frame, grip.filter_contours_output)
 
-        if processedData is not None:
-            for name, data in processedData.items():
-                network_table.getEntry(name).setValue(data)
+        for name, data in shuffleboard_data.items():
+            network_table.getEntry(name).setValue(data)
 
-        outputStream.putFrame(frame.copy())
+        outputStream.putFrame(new_image)
 
 
 if __name__ == "__main__":
