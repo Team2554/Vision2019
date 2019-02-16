@@ -13,9 +13,9 @@ class VisionPipeline:
         """initializes all values to presets or None if need to be set
         """
 
-        self.__rgb_threshold_red = [0.0, 109.9660441426146]
-        self.__rgb_threshold_green = [199.50539568345323, 255.0]
-        self.__rgb_threshold_blue = [199.50539568345323, 255.0]
+        self.__rgb_threshold_red = [0.0, 110.0]
+        self.__rgb_threshold_green = [200.0, 255.0]
+        self.__rgb_threshold_blue = [200.0, 255.0]
 
         self.rgb_threshold_output = None
 
