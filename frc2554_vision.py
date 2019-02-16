@@ -20,13 +20,13 @@ class VisionPipeline:
         """initializes all values to presets or None if need to be set
         """
 
-        self.__hsv_threshold_hue = [77.86673153833091, 125.3912518202375]
-        self.__hsv_threshold_saturation = [137.8511306766397, 209.3978932665679]
-        self.__hsv_threshold_value = [59.60244327371679, 255.0]
+        self.__rgb_threshold_red = [0.0, 110.0]
+        self.__rgb_threshold_green = [200.0, 255.0]
+        self.__rgb_threshold_blue = [200.0, 255.0]
 
-        self.hsv_threshold_output = None
+        self.rgb_threshold_output = None
 
-        self.__resize_image_input = self.hsv_threshold_output
+        self.__resize_image_input = self.rgb_threshold_output
         self.__resize_image_width = 320.0
         self.__resize_image_height = 240.0
         self.__resize_image_interpolation = cv2.INTER_CUBIC
@@ -61,17 +61,17 @@ class VisionPipeline:
         """
         Runs the pipeline and sets all outputs to new values.
         """
-        # Step HSV_Threshold0:
-        self.__hsv_threshold_input = source0
-        (self.hsv_threshold_output) = self.__hsv_threshold(
-            self.__hsv_threshold_input,
-            self.__hsv_threshold_hue,
-            self.__hsv_threshold_saturation,
-            self.__hsv_threshold_value,
+        # Step RGB_Threshold0:
+        self.__rgb_threshold_input = source0
+        (self.rgb_threshold_output) = self.__rgb_threshold(
+            self.__rgb_threshold_input,
+            self.__rgb_threshold_red,
+            self.__rgb_threshold_green,
+            self.__rgb_threshold_blue,
         )
 
         # Step Resize_Image0:
-        self.__resize_image_input = self.hsv_threshold_output
+        self.__resize_image_input = self.rgb_threshold_output
         (self.resize_image_output) = self.__resize_image(
             self.__resize_image_input,
             self.__resize_image_width,
@@ -107,18 +107,20 @@ class VisionPipeline:
         )
 
     @staticmethod
-    def __hsv_threshold(input, hue, sat, val):
-        """Segment an image based on hue, saturation, and value ranges.
+    def __rgb_threshold(input, red, green, blue):
+        """Segment an image based on color ranges.
         Args:
             input: A BGR numpy.ndarray.
-            hue: A list of two numbers the are the min and max hue.
-            sat: A list of two numbers the are the min and max saturation.
-            lum: A list of two numbers the are the min and max value.
+            red: A list of two numbers the are the min and max red.
+            green: A list of two numbers the are the min and max green.
+            blue: A list of two numbers the are the min and max blue.
         Returns:
             A black and white numpy.ndarray.
         """
-        out = cv2.cvtColor(input, cv2.COLOR_BGR2HSV)
-        return cv2.inRange(out, (hue[0], sat[0], val[0]), (hue[1], sat[1], val[1]))
+        out = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
+        return cv2.inRange(
+            out, (red[0], green[0], blue[0]), (red[1], green[1], blue[1])
+        )
 
     @staticmethod
     def __resize_image(input, width, height, interpolation):
@@ -147,7 +149,7 @@ class VisionPipeline:
         else:
             mode = cv2.RETR_LIST
         method = cv2.CHAIN_APPROX_SIMPLE
-        im2, contours, hierarchy = cv2.findContours(input, mode=mode, method=method)
+        contours, hierarchy = cv2.findContours(input, mode=mode, method=method)
         return contours
 
     @staticmethod
@@ -403,42 +405,106 @@ import numpy as np
 import sys
 import time
 
-FOV = 78
-IMG_WIDTH = 320
-DEG_PER_PIXEL = FOV / IMG_WIDTH
-IMG_CENTER = (IMG_WIDTH - 1) // 2
+IMAGE_WIDTH = 320
+IMAGE_HEIGHT = 240
+
+HFOV = 65.8725303703
+
+DEG_PER_PIXEL = HFOV / IMAGE_WIDTH
+
+CENTER_WIDTH_PIXEL = (IMAGE_WIDTH - 1) // 2
+CENTER_HEIGHT_PIXEL = (IMAGE_HEIGHT - 1) // 2
 
 # ---------------------------------------- #
 #          Begin OpenCV Processing         #
 # ---------------------------------------- #
 
 
-def processOpenCV(contours):
-    if len(contours) < 2:
-        return None
+def processOpenCV(img, contours):
+    new_image = img.copy()
+    angle = "-420 haha gotem" #if there is no angle. Arnav please don't delete.
+    center1 = (21, 69)
+    center2 = (420, 666)
+    center_of_centers = ("hi neeraj good job driving", "lmao please don't roast me")
 
-    cnts = list(sorted(contours, key=lambda x: cv2.contourArea(x)))
-    cnt1 = cnts[-1]
-    cnt2 = cnts[-2]
+    target_exists = False
 
-    M1 = cv2.moments(cnt1)
-    M2 = cv2.moments(cnt2)
+    output = {}
 
-    center1 = (int(M1["m10"] / M1["m00"]), int(M1["m01"] / M1["m00"]))
-    center2 = (int(M2["m10"] / M2["m00"]), int(M2["m01"] / M2["m00"]))
+    # Draw the center of the image
+    center_of_image = (CENTER_WIDTH_PIXEL, CENTER_HEIGHT_PIXEL)
+    cv2.circle(
+        img=new_image, center=center_of_image, radius=5, color=(255, 0, 0), thickness=-1
+    )
 
-    midpoint = ((center1[0] + center2[0]) / 2, (center1[1] + center2[1]) / 2)
+    if len(contours) >= 2:
 
-    yawAngle = (midpoint[0] - IMG_CENTER) * DEG_PER_PIXEL
+        target_exists = True
 
-    output = {
-        "center1": center1,
-        "center2": center2,
-        "midpoint": midpoint,
-        "yaw_angle": yawAngle,
-    }
+        # Sort to get the two biggest contours
+        cnts = list(sorted(contours, key=cv2.contourArea))
+        cnt1 = cnts[-1]
+        cnt2 = cnts[-2]
 
-    return output
+        # Draw only these these two contours
+        cv2.drawContours(
+            image=new_image,
+            contours=[cnt1, cnt2],
+            contourIdx=-1,
+            color=(0, 0, 255),
+            thickness=3,
+        )
+
+        # Draw the centers of the two contours
+        M1 = cv2.moments(cnt1)
+        M2 = cv2.moments(cnt2)
+
+        center1 = (int(M1["m10"] / M1["m00"]), int(M1["m01"] / M1["m00"]))
+        center2 = (int(M2["m10"] / M2["m00"]), int(M2["m01"] / M2["m00"]))
+
+        cv2.circle(
+            img=new_image, center=center1, radius=5, color=(0, 0, 255), thickness=-1
+        )
+        cv2.circle(
+            img=new_image, center=center2, radius=5, color=(0, 0, 255), thickness=-1
+        )
+
+        # Draw the midpoint of both of these contours
+        center_of_centers = (
+            int((center1[0] + center2[0]) / 2),
+            int((center1[1] + center2[1]) / 2),
+        )
+        cv2.circle(
+            img=new_image,
+            center=center_of_centers,
+            radius=5,
+            color=(0, 0, 255),
+            thickness=-1,
+        )
+
+        # Determine and write the angle from the center of the image
+        # to the center of the centers
+        angle = (center_of_centers[0] - CENTER_WIDTH_PIXEL) * DEG_PER_PIXEL
+
+        cv2.putText(
+            new_image,
+            str(round(angle, 2)) + " deg",
+            (0, 25),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            color=(0, 0, 255),
+            thickness=2,
+        )
+
+        # Draw a line from the center of image to the center of centers
+        cv2.line(new_image, center_of_centers, center_of_image, (255, 0, 0), 3)
+
+    output["target_exists"] = target_exists
+    output["center1"] = center1
+    output["center2"] = center2
+    output["midpoint"] = center_of_centers
+    output["yaw_angle"] = angle
+    return new_image, output
 
 
 # ---------------------------------------- #
@@ -507,7 +573,7 @@ def main():
             continue
 
         grip.process(frame)
-        processedData = processOpenCV(grip.filter_contours_output)
+        drawn_image, processedData = processOpenCV(frame, grip.filter_contours_output)
 
         if processedData is not None:
             for name, data in processedData.items():
