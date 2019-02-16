@@ -10,8 +10,6 @@ import numpy
 import math
 from enum import Enum
 
-config_json = '{"fps":30,"height":480,"pixel format":"mjpeg","properties":[{"name":"connect_verbose","value":1},{"name":"raw_brightness","value":122},{"name":"brightness","value":48},{"name":"raw_contrast","value":35},{"name":"contrast","value":14},{"name":"raw_saturation","value":20},{"name":"saturation","value":8},{"name":"white_balance_temperature_auto","value":false},{"name":"raw_gain","value":38},{"name":"gain","value":15},{"name":"power_line_frequency","value":2},{"name":"white_balance_temperature","value":4251},{"name":"raw_sharpness","value":0},{"name":"sharpness","value":0},{"name":"backlight_compensation","value":0},{"name":"exposure_auto","value":1},{"name":"raw_exposure_absolute","value":23},{"name":"exposure_absolute","value":1},{"name":"exposure_auto_priority","value":true},{"name":"pan_absolute","value":0},{"name":"tilt_absolute","value":0},{"name":"focus_absolute","value":51},{"name":"focus_auto","value":true},{"name":"zoom_absolute","value":1}],"width":640}'
-
 
 class VisionPipeline:
     """
@@ -22,26 +20,20 @@ class VisionPipeline:
         """initializes all values to presets or None if need to be set
         """
 
+        self.__hsv_threshold_hue = [77.86673153833091, 125.3912518202375]
+        self.__hsv_threshold_saturation = [137.8511306766397, 209.3978932665679]
+        self.__hsv_threshold_value = [59.60244327371679, 255.0]
+
+        self.hsv_threshold_output = None
+
+        self.__resize_image_input = self.hsv_threshold_output
         self.__resize_image_width = 320.0
-        self.__resize_image_height = 180.0
+        self.__resize_image_height = 240.0
         self.__resize_image_interpolation = cv2.INTER_CUBIC
 
         self.resize_image_output = None
 
-        self.__blur_input = self.resize_image_output
-        self.__blur_type = BlurType.Gaussian_Blur
-        self.__blur_radius = 4.716981132075471
-
-        self.blur_output = None
-
-        self.__rgb_threshold_input = self.blur_output
-        self.__rgb_threshold_red = [205, 255.0]
-        self.__rgb_threshold_green = [205, 255.0]
-        self.__rgb_threshold_blue = [205, 255.0]
-
-        self.rgb_threshold_output = None
-
-        self.__find_contours_input = self.rgb_threshold_output
+        self.__find_contours_input = self.resize_image_output
         self.__find_contours_external_only = False
 
         self.find_contours_output = None
@@ -51,7 +43,7 @@ class VisionPipeline:
         self.convex_hulls_output = None
 
         self.__filter_contours_contours = self.convex_hulls_output
-        self.__filter_contours_min_area = 100.0
+        self.__filter_contours_min_area = 50.0
         self.__filter_contours_min_perimeter = 0.0
         self.__filter_contours_min_width = 0.0
         self.__filter_contours_max_width = 1000.0
@@ -69,8 +61,17 @@ class VisionPipeline:
         """
         Runs the pipeline and sets all outputs to new values.
         """
+        # Step HSV_Threshold0:
+        self.__hsv_threshold_input = source0
+        (self.hsv_threshold_output) = self.__hsv_threshold(
+            self.__hsv_threshold_input,
+            self.__hsv_threshold_hue,
+            self.__hsv_threshold_saturation,
+            self.__hsv_threshold_value,
+        )
+
         # Step Resize_Image0:
-        self.__resize_image_input = source0
+        self.__resize_image_input = self.hsv_threshold_output
         (self.resize_image_output) = self.__resize_image(
             self.__resize_image_input,
             self.__resize_image_width,
@@ -78,23 +79,8 @@ class VisionPipeline:
             self.__resize_image_interpolation,
         )
 
-        # Step Blur0:
-        self.__blur_input = self.resize_image_output
-        (self.blur_output) = self.__blur(
-            self.__blur_input, self.__blur_type, self.__blur_radius
-        )
-
-        # Step RGB_Threshold0:
-        self.__rgb_threshold_input = self.blur_output
-        (self.rgb_threshold_output) = self.__rgb_threshold(
-            self.__rgb_threshold_input,
-            self.__rgb_threshold_red,
-            self.__rgb_threshold_green,
-            self.__rgb_threshold_blue,
-        )
-
         # Step Find_Contours0:
-        self.__find_contours_input = self.rgb_threshold_output
+        self.__find_contours_input = self.resize_image_output
         (self.find_contours_output) = self.__find_contours(
             self.__find_contours_input, self.__find_contours_external_only
         )
@@ -121,6 +107,20 @@ class VisionPipeline:
         )
 
     @staticmethod
+    def __hsv_threshold(input, hue, sat, val):
+        """Segment an image based on hue, saturation, and value ranges.
+        Args:
+            input: A BGR numpy.ndarray.
+            hue: A list of two numbers the are the min and max hue.
+            sat: A list of two numbers the are the min and max saturation.
+            lum: A list of two numbers the are the min and max value.
+        Returns:
+            A black and white numpy.ndarray.
+        """
+        out = cv2.cvtColor(input, cv2.COLOR_BGR2HSV)
+        return cv2.inRange(out, (hue[0], sat[0], val[0]), (hue[1], sat[1], val[1]))
+
+    @staticmethod
     def __resize_image(input, width, height, interpolation):
         """Scales and image to an exact size.
         Args:
@@ -132,44 +132,6 @@ class VisionPipeline:
             A numpy.ndarray of the new size.
         """
         return cv2.resize(input, ((int)(width), (int)(height)), 0, 0, interpolation)
-
-    @staticmethod
-    def __blur(src, type, radius):
-        """Softens an image using one of several filters.
-        Args:
-            src: The source mat (numpy.ndarray).
-            type: The blurType to perform represented as an int.
-            radius: The radius for the blur as a float.
-        Returns:
-            A numpy.ndarray that has been blurred.
-        """
-        if type is BlurType.Box_Blur:
-            ksize = int(2 * round(radius) + 1)
-            return cv2.blur(src, (ksize, ksize))
-        elif type is BlurType.Gaussian_Blur:
-            ksize = int(6 * round(radius) + 1)
-            return cv2.GaussianBlur(src, (ksize, ksize), round(radius))
-        elif type is BlurType.Median_Filter:
-            ksize = int(2 * round(radius) + 1)
-            return cv2.medianBlur(src, ksize)
-        else:
-            return cv2.bilateralFilter(src, -1, round(radius), round(radius))
-
-    @staticmethod
-    def __rgb_threshold(input, red, green, blue):
-        """Segment an image based on color ranges.
-        Args:
-            input: A BGR numpy.ndarray.
-            red: A list of two numbers the are the min and max red.
-            green: A list of two numbers the are the min and max green.
-            blue: A list of two numbers the are the min and max blue.
-        Returns:
-            A black and white numpy.ndarray.
-        """
-        out = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
-        return cv2.inRange(
-            out, (red[0], green[0], blue[0]), (red[1], green[1], blue[1])
-        )
 
     @staticmethod
     def __find_contours(input, external_only):
@@ -258,8 +220,6 @@ class VisionPipeline:
         return output
 
 
-BlurType = Enum("BlurType", "Box_Blur Gaussian_Blur Median_Filter Bilateral_Filter")
-
 # ---------------------------------------- #
 #             End GRIP Pipeline            #
 # ---------------------------------------- #
@@ -316,6 +276,7 @@ from networktables import NetworkTablesInstance
 #   }
 
 configFile = "/boot/frc.json"
+config_json = '{"fps":30,"height":480,"pixel format":"mjpeg","properties":[{"name":"connect_verbose","value":1},{"name":"raw_brightness","value":122},{"name":"brightness","value":48},{"name":"raw_contrast","value":35},{"name":"contrast","value":14},{"name":"raw_saturation","value":20},{"name":"saturation","value":8},{"name":"white_balance_temperature_auto","value":false},{"name":"raw_gain","value":38},{"name":"gain","value":15},{"name":"power_line_frequency","value":2},{"name":"white_balance_temperature","value":4251},{"name":"raw_sharpness","value":0},{"name":"sharpness","value":0},{"name":"backlight_compensation","value":0},{"name":"exposure_auto","value":1},{"name":"raw_exposure_absolute","value":23},{"name":"exposure_absolute","value":1},{"name":"exposure_auto_priority","value":true},{"name":"pan_absolute","value":0},{"name":"tilt_absolute","value":0},{"name":"focus_absolute","value":51},{"name":"focus_auto","value":true},{"name":"zoom_absolute","value":1}],"width":640}'
 
 
 class CameraConfig:
