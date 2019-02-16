@@ -13,13 +13,13 @@ class VisionPipeline:
         """initializes all values to presets or None if need to be set
         """
 
-        self.__hsv_threshold_hue = [77.86673153833091, 125.3912518202375]
-        self.__hsv_threshold_saturation = [137.8511306766397, 209.3978932665679]
-        self.__hsv_threshold_value = [59.60244327371679, 255.0]
+        self.__rgb_threshold_red = [0.0, 109.9660441426146]
+        self.__rgb_threshold_green = [199.50539568345323, 255.0]
+        self.__rgb_threshold_blue = [199.50539568345323, 255.0]
 
-        self.hsv_threshold_output = None
+        self.rgb_threshold_output = None
 
-        self.__resize_image_input = self.hsv_threshold_output
+        self.__resize_image_input = self.rgb_threshold_output
         self.__resize_image_width = 320.0
         self.__resize_image_height = 240.0
         self.__resize_image_interpolation = cv2.INTER_CUBIC
@@ -54,17 +54,17 @@ class VisionPipeline:
         """
         Runs the pipeline and sets all outputs to new values.
         """
-        # Step HSV_Threshold0:
-        self.__hsv_threshold_input = source0
-        (self.hsv_threshold_output) = self.__hsv_threshold(
-            self.__hsv_threshold_input,
-            self.__hsv_threshold_hue,
-            self.__hsv_threshold_saturation,
-            self.__hsv_threshold_value,
+        # Step RGB_Threshold0:
+        self.__rgb_threshold_input = source0
+        (self.rgb_threshold_output) = self.__rgb_threshold(
+            self.__rgb_threshold_input,
+            self.__rgb_threshold_red,
+            self.__rgb_threshold_green,
+            self.__rgb_threshold_blue,
         )
 
         # Step Resize_Image0:
-        self.__resize_image_input = self.hsv_threshold_output
+        self.__resize_image_input = self.rgb_threshold_output
         (self.resize_image_output) = self.__resize_image(
             self.__resize_image_input,
             self.__resize_image_width,
@@ -100,18 +100,20 @@ class VisionPipeline:
         )
 
     @staticmethod
-    def __hsv_threshold(input, hue, sat, val):
-        """Segment an image based on hue, saturation, and value ranges.
+    def __rgb_threshold(input, red, green, blue):
+        """Segment an image based on color ranges.
         Args:
             input: A BGR numpy.ndarray.
-            hue: A list of two numbers the are the min and max hue.
-            sat: A list of two numbers the are the min and max saturation.
-            lum: A list of two numbers the are the min and max value.
+            red: A list of two numbers the are the min and max red.
+            green: A list of two numbers the are the min and max green.
+            blue: A list of two numbers the are the min and max blue.
         Returns:
             A black and white numpy.ndarray.
         """
-        out = cv2.cvtColor(input, cv2.COLOR_BGR2HSV)
-        return cv2.inRange(out, (hue[0], sat[0], val[0]), (hue[1], sat[1], val[1]))
+        out = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
+        return cv2.inRange(
+            out, (red[0], green[0], blue[0]), (red[1], green[1], blue[1])
+        )
 
     @staticmethod
     def __resize_image(input, width, height, interpolation):
@@ -140,7 +142,7 @@ class VisionPipeline:
         else:
             mode = cv2.RETR_LIST
         method = cv2.CHAIN_APPROX_SIMPLE
-        im2, contours, hierarchy = cv2.findContours(input, mode=mode, method=method)
+        contours, hierarchy = cv2.findContours(input, mode=mode, method=method)
         return contours
 
     @staticmethod
@@ -211,4 +213,3 @@ class VisionPipeline:
                 continue
             output.append(contour)
         return output
-
