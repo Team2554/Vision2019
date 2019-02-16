@@ -11,12 +11,19 @@ HFOV = 65.8725303703
 
 DEG_PER_PIXEL = HFOV / IMAGE_WIDTH
 
-CENTER_PIXEL = (IMAGE_WIDTH - 1) // 2
+CENTER_WIDTH_PIXEL = (IMAGE_WIDTH - 1) // 2
+CENTER_HEIGHT_PIXEL = (IMAGE_HEIGHT - 1) // 2
 
 
 def detectCentersAndAngles(img, contours):
     new_image = img.copy()
     angle = -1
+
+    # Draw the center of the image
+    center_of_image = (CENTER_WIDTH_PIXEL, CENTER_HEIGHT_PIXEL)
+    cv2.circle(
+        img=new_image, center=center_of_image, radius=5, color=(255, 0, 0), thickness=-1
+    )
 
     if len(contours) >= 2:
         # Sort to get the two biggest contours
@@ -60,9 +67,10 @@ def detectCentersAndAngles(img, contours):
             thickness=-1,
         )
 
-        angle = (center_of_centers[0] - CENTER_PIXEL) * DEG_PER_PIXEL
+        # Determine and write the angle from the center of the image
+        # to the center of the centers
+        angle = (center_of_centers[0] - CENTER_WIDTH_PIXEL) * DEG_PER_PIXEL
 
-        # print(angle)
         cv2.putText(
             new_image,
             str(round(angle, 2)) + " deg",
@@ -72,6 +80,9 @@ def detectCentersAndAngles(img, contours):
             color=(0, 0, 255),
             thickness=2,
         )
+
+        # Draw a line from the center of image to the center of centers
+        cv2.line(new_image, center_of_centers, center_of_image, (255, 0, 0), 3)
 
     return new_image, angle
 
