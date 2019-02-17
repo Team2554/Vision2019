@@ -1,17 +1,7 @@
 {
-<<<<<<< Updated upstream
     "python.linting.pylintEnabled": true,
     "python.linting.enabled": true,
-    "python.formatting.provider": "yapf",
+    "python.formatting.provider": "black",
     "editor.formatOnSave": true,
     "python.linting.pylintUseMinimalCheckers": false,
 }
-=======
-  "python.linting.pylintEnabled": true,
-  "python.linting.enabled": true,
-  "python.formatting.provider": "black",
-  "editor.formatOnSave": true,
-  "python.linting.pylintUseMinimalCheckers": false,
-  "python.pythonPath": ".venv/bin/python"
-}
->>>>>>> Stashed changes
