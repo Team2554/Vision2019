@@ -20,9 +20,9 @@ class VisionPipeline:
         """initializes all values to presets or None if need to be set
         """
 
-        self.__rgb_threshold_red = [0.0, 110.0]
-        self.__rgb_threshold_green = [200.0, 255.0]
-        self.__rgb_threshold_blue = [200.0, 255.0]
+        self.__rgb_threshold_red = [0.0, 58.01358234295414]
+        self.__rgb_threshold_green = [139.88309352517987, 255.0]
+        self.__rgb_threshold_blue = [139.88309352517987, 255.0]
 
         self.rgb_threshold_output = None
 
@@ -41,21 +41,6 @@ class VisionPipeline:
         self.__convex_hulls_contours = self.find_contours_output
 
         self.convex_hulls_output = None
-
-        self.__filter_contours_contours = self.convex_hulls_output
-        self.__filter_contours_min_area = 50.0
-        self.__filter_contours_min_perimeter = 0.0
-        self.__filter_contours_min_width = 0.0
-        self.__filter_contours_max_width = 1000.0
-        self.__filter_contours_min_height = 0.0
-        self.__filter_contours_max_height = 1000.0
-        self.__filter_contours_solidity = [0, 100]
-        self.__filter_contours_max_vertices = 1000000.0
-        self.__filter_contours_min_vertices = 0.0
-        self.__filter_contours_min_ratio = 0.0
-        self.__filter_contours_max_ratio = 1000.0
-
-        self.filter_contours_output = None
 
     def process(self, source0):
         """
@@ -88,23 +73,6 @@ class VisionPipeline:
         # Step Convex_Hulls0:
         self.__convex_hulls_contours = self.find_contours_output
         (self.convex_hulls_output) = self.__convex_hulls(self.__convex_hulls_contours)
-
-        # Step Filter_Contours0:
-        self.__filter_contours_contours = self.convex_hulls_output
-        (self.filter_contours_output) = self.__filter_contours(
-            self.__filter_contours_contours,
-            self.__filter_contours_min_area,
-            self.__filter_contours_min_perimeter,
-            self.__filter_contours_min_width,
-            self.__filter_contours_max_width,
-            self.__filter_contours_min_height,
-            self.__filter_contours_max_height,
-            self.__filter_contours_solidity,
-            self.__filter_contours_max_vertices,
-            self.__filter_contours_min_vertices,
-            self.__filter_contours_min_ratio,
-            self.__filter_contours_max_ratio,
-        )
 
     @staticmethod
     def __rgb_threshold(input, red, green, blue):
@@ -149,7 +117,7 @@ class VisionPipeline:
         else:
             mode = cv2.RETR_LIST
         method = cv2.CHAIN_APPROX_SIMPLE
-        img, contours, hierarchy = cv2.findContours(input, mode=mode, method=method)
+        im2, contours, hierarchy = cv2.findContours(input, mode=mode, method=method)
         return contours
 
     @staticmethod
@@ -163,62 +131,6 @@ class VisionPipeline:
         output = []
         for contour in input_contours:
             output.append(cv2.convexHull(contour))
-        return output
-
-    @staticmethod
-    def __filter_contours(
-        input_contours,
-        min_area,
-        min_perimeter,
-        min_width,
-        max_width,
-        min_height,
-        max_height,
-        solidity,
-        max_vertex_count,
-        min_vertex_count,
-        min_ratio,
-        max_ratio,
-    ):
-        """Filters out contours that do not meet certain criteria.
-        Args:
-            input_contours: Contours as a list of numpy.ndarray.
-            min_area: The minimum area of a contour that will be kept.
-            min_perimeter: The minimum perimeter of a contour that will be kept.
-            min_width: Minimum width of a contour.
-            max_width: MaxWidth maximum width.
-            min_height: Minimum height.
-            max_height: Maximimum height.
-            solidity: The minimum and maximum solidity of a contour.
-            min_vertex_count: Minimum vertex Count of the contours.
-            max_vertex_count: Maximum vertex Count.
-            min_ratio: Minimum ratio of width to height.
-            max_ratio: Maximum ratio of width to height.
-        Returns:
-            Contours as a list of numpy.ndarray.
-        """
-        output = []
-        for contour in input_contours:
-            x, y, w, h = cv2.boundingRect(contour)
-            if w < min_width or w > max_width:
-                continue
-            if h < min_height or h > max_height:
-                continue
-            area = cv2.contourArea(contour)
-            if area < min_area:
-                continue
-            if cv2.arcLength(contour, True) < min_perimeter:
-                continue
-            hull = cv2.convexHull(contour)
-            solid = 100 * area / cv2.contourArea(hull)
-            if solid < solidity[0] or solid > solidity[1]:
-                continue
-            if len(contour) < min_vertex_count or len(contour) > max_vertex_count:
-                continue
-            ratio = (float)(w) / h
-            if ratio < min_ratio or ratio > max_ratio:
-                continue
-            output.append(contour)
         return output
 
 
@@ -576,7 +488,7 @@ def main():
             continue
 
         grip.process(frame)
-        new_image, shuffleboard_data = processOpenCV(frame, grip.filter_contours_output)
+        new_image, shuffleboard_data = processOpenCV(frame, grip.convex_hulls_output)
 
         for name, data in shuffleboard_data.items():
             network_table.getEntry(name).setValue(data)
