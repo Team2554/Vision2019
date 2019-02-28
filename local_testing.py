@@ -106,7 +106,7 @@ def main():
             cv2.imshow("image", img)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
-        except ex:
+        except Exception as ex:
             print(ex)
 
 
