@@ -1,4 +1,4 @@
-from GRIP_Files.cross_your_fingers import VisionPipeline
+from GRIP_Files.ok_maybe_now import VisionPipeline
 
 import cv2
 from math import tan, sqrt
@@ -93,18 +93,21 @@ def main():
     pipeline = VisionPipeline()
 
     while True:
-        ret, img = cap.read()
+        try:
+            ret, img = cap.read()
 
-        pipeline.process(img)
-        contours = pipeline.filter_contours_output
+            pipeline.process(img)
+            contours = pipeline.convex_hulls_output
 
-        img = cv2.resize(img, (320, 240), 0, 0, cv2.INTER_CUBIC)
+            img = cv2.resize(img, (320, 240), 0, 0, cv2.INTER_CUBIC)
 
-        img, angle = detectCentersAndAngles(img, contours)
+            img, angle = detectCentersAndAngles(img, contours)
 
-        cv2.imshow("image", img)
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
+            cv2.imshow("image", img)
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+        except ex:
+            print(ex)
 
 
 if __name__ == "__main__":
