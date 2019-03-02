@@ -1,7 +1,10 @@
-from GRIP_Files.ok_maybe_now import VisionPipeline
+#BIG TODO: FIX WHITE BALANCE AND REDO GRIP TUNING
+
+from GRIP_Files.imtiredofdoingthis import VisionPipeline
 
 import cv2
 from math import tan, sqrt
+import numpy as np
 
 
 IMAGE_WIDTH = 320
@@ -83,6 +86,19 @@ def detectCentersAndAngles(img, contours):
 
         # Draw a line from the center of image to the center of centers
         cv2.line(new_image, center_of_centers, center_of_image, (255, 0, 0), 3)
+
+        # Draw the bounding box around the contours
+        rect1 = cv2.minAreaRect(cnt1)
+        box1 = cv2.boxPoints(rect1)
+        box1 = np.int0(box1)
+        box1 = np.array([box1[0], box1[1]])
+        cv2.drawContours(new_image, [box1], 0, (0, 255, 0), 2)
+
+        rect2 = cv2.minAreaRect(cnt2)
+        box2 = cv2.boxPoints(rect2)
+        box2 = np.int0(box2)
+        box2 = np.array([box2[0], box2[1]])
+        cv2.drawContours(new_image, [box2], 0, (0, 255, 0), 2)
 
     return new_image, angle
 
