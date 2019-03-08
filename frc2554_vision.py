@@ -190,7 +190,7 @@ from networktables import NetworkTablesInstance
 #   }
 
 configFile = "/boot/frc.json"
-config_json = '{ "fps": 30, "height": 480, "pixel format": "mjpeg", "properties": [ { "name": "connect_verbose", "value": 1 }, { "name": "raw_brightness", "value": 128 }, { "name": "brightness", "value": 50 }, { "name": "raw_contrast", "value": 32 }, { "name": "contrast", "value": 12 }, { "name": "raw_saturation", "value": 32 }, { "name": "saturation", "value": 12 }, { "name": "white_balance_temperature_auto", "value": true }, { "name": "raw_gain", "value": 64 }, { "name": "gain", "value": 25 }, { "name": "power_line_frequency", "value": 2 }, { "name": "white_balance_temperature", "value": 3008 }, { "name": "raw_sharpness", "value": 22 }, { "name": "sharpness", "value": 8 }, { "name": "backlight_compensation", "value": 1 }, { "name": "exposure_auto", "value": 3 }, { "name": "raw_exposure_absolute", "value": 83 }, { "name": "exposure_absolute", "value": 3 }, { "name": "exposure_auto_priority", "value": true }, { "name": "pan_absolute", "value": 0 }, { "name": "tilt_absolute", "value": 0 }, { "name": "focus_absolute", "value": 51 }, { "name": "focus_auto", "value": true }, { "name": "zoom_absolute", "value": 1 } ], "width": 640 }'
+config_json = '{ "fps": 30, "height": 480, "pixel format": "mjpeg", "properties": [ { "name": "connect_verbose", "value": 1 }, { "name": "raw_brightness", "value": 135 }, { "name": "brightness", "value": 53 }, { "name": "raw_contrast", "value": 81 }, { "name": "contrast", "value": 32 }, { "name": "raw_saturation", "value": 132 }, { "name": "saturation", "value": 52 }, { "name": "white_balance_temperature_auto", "value": false }, { "name": "raw_gain", "value": 40 }, { "name": "gain", "value": 16 }, { "name": "power_line_frequency", "value": 2 }, { "name": "white_balance_temperature", "value": 6500 }, { "name": "raw_sharpness", "value": 20 }, { "name": "sharpness", "value": 8 }, { "name": "backlight_compensation", "value": 1 }, { "name": "exposure_auto", "value": 1 }, { "name": "raw_exposure_absolute", "value": 23 }, { "name": "exposure_absolute", "value": 1 }, { "name": "exposure_auto_priority", "value": true }, { "name": "pan_absolute", "value": 0 }, { "name": "tilt_absolute", "value": 0 }, { "name": "focus_absolute", "value": 51 }, { "name": "focus_auto", "value": true }, { "name": "zoom_absolute", "value": 1 } ], "width": 640 }'
 
 
 class CameraConfig:
@@ -487,13 +487,13 @@ def main():
             outputStream.notifyError(cvSink.getError())
             continue
 
-        grip.process(frame)
-        new_image, shuffleboard_data = processOpenCV(frame, grip.convex_hulls_output)
+        # grip.process(frame)
+        # new_image, shuffleboard_data = processOpenCV(frame, grip.convex_hulls_output)
 
-        for name, data in shuffleboard_data.items():
-            network_table.getEntry(name).setValue(data)
+        # for name, data in shuffleboard_data.items():
+        #    network_table.getEntry(name).setValue(data)
 
-        outputStream.putFrame(new_image)
+        # outputStream.putFrame(new_image)
 
 
 if __name__ == "__main__":

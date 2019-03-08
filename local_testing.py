@@ -1,6 +1,6 @@
-#BIG TODO: FIX WHITE BALANCE AND REDO GRIP TUNING
+# BIG TODO: FIX WHITE BALANCE AND REDO GRIP TUNING
 
-from GRIP_Files.imtiredofdoingthis import VisionPipeline
+from GRIP_Files.finalfourtwenty import VisionPipeline
 
 import cv2
 from math import tan, sqrt
@@ -25,7 +25,7 @@ def detectCentersAndAngles(img, contours):
     # Draw the center of the image
     center_of_image = (CENTER_WIDTH_PIXEL, CENTER_HEIGHT_PIXEL)
     cv2.circle(
-        img=new_image, center=center_of_image, radius=5, color=(255, 0, 0), thickness=-1
+        img=new_image, center=center_of_image, radius=3, color=(255, 0, 0), thickness=-1
     )
 
     if len(contours) >= 2:
@@ -35,13 +35,13 @@ def detectCentersAndAngles(img, contours):
         cnt2 = cnts[-2]
 
         # Draw only these these two contours
-        cv2.drawContours(
-            image=new_image,
-            contours=[cnt1, cnt2],
-            contourIdx=-1,
-            color=(0, 0, 255),
-            thickness=3,
-        )
+        # cv2.drawContours(
+        #     image=new_image,
+        #     contours=[cnt1, cnt2],
+        #     contourIdx=-1,
+        #     color=(0, 0, 255),
+        #     thickness=3,
+        # )
 
         # Draw the centers of the two contours
         M1 = cv2.moments(cnt1)
@@ -51,10 +51,10 @@ def detectCentersAndAngles(img, contours):
         center2 = (int(M2["m10"] / M2["m00"]), int(M2["m01"] / M2["m00"]))
 
         cv2.circle(
-            img=new_image, center=center1, radius=5, color=(0, 0, 255), thickness=-1
+            img=new_image, center=center1, radius=3, color=(0, 0, 255), thickness=-1
         )
         cv2.circle(
-            img=new_image, center=center2, radius=5, color=(0, 0, 255), thickness=-1
+            img=new_image, center=center2, radius=3, color=(0, 0, 255), thickness=-1
         )
 
         # Draw the midpoint of both of these contours
@@ -65,7 +65,7 @@ def detectCentersAndAngles(img, contours):
         cv2.circle(
             img=new_image,
             center=center_of_centers,
-            radius=5,
+            radius=3,
             color=(0, 0, 255),
             thickness=-1,
         )
@@ -80,25 +80,28 @@ def detectCentersAndAngles(img, contours):
             (0, 25),
             cv2.FONT_HERSHEY_SIMPLEX,
             1,
-            color=(0, 0, 255),
+            color=(0, 255, 255),
             thickness=2,
         )
 
         # Draw a line from the center of image to the center of centers
-        cv2.line(new_image, center_of_centers, center_of_image, (255, 0, 0), 3)
+        cv2.line(new_image, center_of_centers, center_of_image, (255, 0, 0), 2)
 
         # Draw the bounding box around the contours
         rect1 = cv2.minAreaRect(cnt1)
         box1 = cv2.boxPoints(rect1)
+        theta1 = rect1[-1]
+        # print("theta1: {0}".format(theta1))
         box1 = np.int0(box1)
-        box1 = np.array([box1[0], box1[1]])
-        cv2.drawContours(new_image, [box1], 0, (0, 255, 0), 2)
+        cv2.drawContours(new_image, [box1], 0, (0, 0, 255), 2)
 
         rect2 = cv2.minAreaRect(cnt2)
         box2 = cv2.boxPoints(rect2)
+        theta2 = rect2[-1]
+        # print("theta2: {0}".format(theta2))
+        print("diff: {}".format(abs(abs(theta2) - abs(theta1))))
         box2 = np.int0(box2)
-        box2 = np.array([box2[0], box2[1]])
-        cv2.drawContours(new_image, [box2], 0, (0, 255, 0), 2)
+        cv2.drawContours(new_image, [box2], 0, (0, 0, 255), 2)
 
     return new_image, angle
 

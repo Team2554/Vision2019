@@ -12,9 +12,9 @@ class VisionPipeline:
         """initializes all values to presets or None if need to be set
         """
 
-        self.__rgb_threshold_red = [0.0, 60.17826825127335]
-        self.__rgb_threshold_green = [199.50539568345323, 255.0]
-        self.__rgb_threshold_blue = [201.79856115107913, 255.0]
+        self.__rgb_threshold_red = [0.0, 144.92648866498453]
+        self.__rgb_threshold_green = [145.14312278990366, 255.0]
+        self.__rgb_threshold_blue = [0.0, 144.49355199942204]
 
         self.rgb_threshold_output = None
 
@@ -35,7 +35,7 @@ class VisionPipeline:
         self.convex_hulls_output = None
 
         self.__filter_contours_contours = self.convex_hulls_output
-        self.__filter_contours_min_area = 30.0
+        self.__filter_contours_min_area = 20.0
         self.__filter_contours_min_perimeter = 0.0
         self.__filter_contours_min_width = 0.0
         self.__filter_contours_max_width = 1000.0
