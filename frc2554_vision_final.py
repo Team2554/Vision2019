@@ -387,10 +387,11 @@ def getContourAngle(contour):
 def angleToTarget(img, contours):
     new_image = img
     
-    angle = "-420 haha gotem"
+    angle = -420
     center1 = (21, 69)
     center2 = (420, 666)
-    targetCenter = ("hi neeraj good job driving", "lmao please don't roast me")
+    targetCenter = (999, 999)
+    pixelDiff = -6969
     targetExists = False
 
     imgCenter = (CENTER_WIDTH_PIXEL, CENTER_HEIGHT_PIXEL)
@@ -411,7 +412,7 @@ def angleToTarget(img, contours):
                 baseAngle = i
             else:
                 diff = abs(abs(i) - abs(baseAngle))
-                if (diff - 80) < 20:
+                if diff > 60 and diff < 80:
                     finalCnts.append(contours[idx])
                     break
         if not len(finalCnts) < 2:
@@ -458,12 +459,14 @@ def angleToTarget(img, contours):
             )
 
             cv2.line(new_image, targetCenter, imgCenter, (255, 0, 0), 2)
+            pixelDiff = targetCenter[0] - imgCenter[0]
     
     shuffleboard_data = {
         "target_exists": targetExists,
         "center1": center1,
         "center2": center2,
         "midpoint": targetCenter,
+        "pixel_diff": pixelDiff,
         "yaw_angle": angle
     }
     return new_image, shuffleboard_data
@@ -544,6 +547,8 @@ def main():
 
         for name, data in shuffleboard_data.items():
            network_table.getEntry(name).setValue(data)
+
+        new_image = cv2.resize(new_image, (160, 120))
 
         outputStream.putFrame(new_image)
 
