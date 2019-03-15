@@ -23,8 +23,17 @@ def getContourAngle(contour):
 
 
 def angleToTarget(img, contours):
-    new_image = img.copy()
+    new_image = img
+
+    contour_diff = -500
+    c1a = -250
+    c2a = -250
     angle = -420
+    center1 = (21, 69)
+    center2 = (420, 666)
+    targetCenter = (999, 999)
+    pixelDiff = -6969
+    targetExists = False
 
     imgCenter = (CENTER_WIDTH_PIXEL, CENTER_HEIGHT_PIXEL)
     cv2.circle(
@@ -43,14 +52,19 @@ def angleToTarget(img, contours):
                 finalCnts.append(contours[idx])
                 baseAngle = i
             else:
-                diff = abs(abs(i) - abs(baseAngle))
-                if (diff - 80) < 20:
+                diff = abs((i % 360) - (baseAngle % 360))
+                c1a = i % 360
+                c2a = baseAngle % 360
+                contour_diff = diff
+                if diff > 55 and diff < 80:
                     finalCnts.append(contours[idx])
                     break
         if not len(finalCnts) < 2:
             finalCnts = list(sorted(finalCnts, key=cv2.contourArea))[::-1]
             cnt1 = finalCnts[0]
             cnt2 = finalCnts[1]
+
+            cv2.drawContours(new_image, finalCnts, -1, color=(255, 0, 0), thickness=2)
 
             M1 = cv2.moments(cnt1)
             M2 = cv2.moments(cnt2)
@@ -79,6 +93,7 @@ def angleToTarget(img, contours):
             )
 
             angle = (targetCenter[0] - CENTER_WIDTH_PIXEL) * DEG_PER_PIXEL
+            targetExists = True
             cv2.putText(
                 new_image,
                 str(round(angle, 2)) + " deg",
@@ -90,6 +105,7 @@ def angleToTarget(img, contours):
             )
 
             cv2.line(new_image, targetCenter, imgCenter, (255, 0, 0), 2)
+            pixelDiff = targetCenter[0] - imgCenter[0]
     return new_image, angle
 
 

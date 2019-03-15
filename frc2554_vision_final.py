@@ -6,6 +6,7 @@
 
 
 import cv2
+cv2.setUseOptimized(True)
 import numpy
 import math
 from enum import Enum
@@ -240,7 +241,7 @@ from networktables import NetworkTablesInstance
 #   }
 
 configFile = "/boot/frc.json"
-config_json = '{ "fps": 30, "height": 480, "pixel format": "mjpeg", "properties": [ { "name": "connect_verbose", "value": 1 }, { "name": "raw_brightness", "value": 135 }, { "name": "brightness", "value": 53 }, { "name": "raw_contrast", "value": 81 }, { "name": "contrast", "value": 32 }, { "name": "raw_saturation", "value": 132 }, { "name": "saturation", "value": 52 }, { "name": "white_balance_temperature_auto", "value": false }, { "name": "raw_gain", "value": 40 }, { "name": "gain", "value": 16 }, { "name": "power_line_frequency", "value": 2 }, { "name": "white_balance_temperature", "value": 6500 }, { "name": "raw_sharpness", "value": 20 }, { "name": "sharpness", "value": 8 }, { "name": "backlight_compensation", "value": 1 }, { "name": "exposure_auto", "value": 1 }, { "name": "raw_exposure_absolute", "value": 23 }, { "name": "exposure_absolute", "value": 1 }, { "name": "exposure_auto_priority", "value": true }, { "name": "pan_absolute", "value": 0 }, { "name": "tilt_absolute", "value": 0 }, { "name": "focus_absolute", "value": 51 }, { "name": "focus_auto", "value": true }, { "name": "zoom_absolute", "value": 1 } ], "width": 640 }'
+config_json = '{ "fps": 60, "height": 480, "pixel format": "mjpeg", "properties": [ { "name": "connect_verbose", "value": 1 }, { "name": "raw_brightness", "value": 135 }, { "name": "brightness", "value": 53 }, { "name": "raw_contrast", "value": 81 }, { "name": "contrast", "value": 32 }, { "name": "raw_saturation", "value": 132 }, { "name": "saturation", "value": 52 }, { "name": "white_balance_temperature_auto", "value": false }, { "name": "raw_gain", "value": 40 }, { "name": "gain", "value": 16 }, { "name": "power_line_frequency", "value": 2 }, { "name": "white_balance_temperature", "value": 6500 }, { "name": "raw_sharpness", "value": 20 }, { "name": "sharpness", "value": 8 }, { "name": "backlight_compensation", "value": 1 }, { "name": "exposure_auto", "value": 1 }, { "name": "raw_exposure_absolute", "value": 23 }, { "name": "exposure_absolute", "value": 1 }, { "name": "exposure_auto_priority", "value": true }, { "name": "pan_absolute", "value": 0 }, { "name": "tilt_absolute", "value": 0 }, { "name": "focus_absolute", "value": 51 }, { "name": "focus_auto", "value": true }, { "name": "zoom_absolute", "value": 1 } ], "width": 640 }'
 
 
 class CameraConfig:
@@ -345,13 +346,13 @@ def startCamera(config):
     inst = CameraServer.getInstance()
     camera = UsbCamera(config.name, config.path)
 
-    server = inst.startAutomaticCapture(camera=camera, return_server=True)
-
     # camera.setConfigJson(json.dumps(config.config))
     camera.setConfigJson(config_json)
     camera.setConnectionStrategy(VideoSource.ConnectionStrategy.kKeepOpen)
 
-    return inst, camera, server
+    inst.addCamera(camera)
+
+    return inst, camera
 
 
 # ---------------------------------------- #
@@ -363,6 +364,7 @@ def startCamera(config):
 # ---------------------------------------- #
 
 import cv2
+cv2.setUseOptimized(True)
 from math import tan, sqrt
 import numpy as np
 
@@ -386,7 +388,10 @@ def getContourAngle(contour):
 
 def angleToTarget(img, contours):
     new_image = img
-    
+
+    contour_diff = -500
+    c1a = -250
+    c2a = -250
     angle = -420
     center1 = (21, 69)
     center2 = (420, 666)
@@ -411,14 +416,19 @@ def angleToTarget(img, contours):
                 finalCnts.append(contours[idx])
                 baseAngle = i
             else:
-                diff = abs(abs(i) - abs(baseAngle))
-                if diff > 60 and diff < 80:
+                diff = abs((i % 360) - (baseAngle % 360))
+                c1a = i % 360
+                c2a = baseAngle % 360
+                contour_diff = diff
+                if diff > 55 and diff < 80:
                     finalCnts.append(contours[idx])
                     break
         if not len(finalCnts) < 2:
             finalCnts = list(sorted(finalCnts, key=cv2.contourArea))[::-1]
             cnt1 = finalCnts[0]
             cnt2 = finalCnts[1]
+
+            cv2.drawContours(new_image, finalCnts, -1, color=(255, 0, 0), thickness=2)
 
             M1 = cv2.moments(cnt1)
             M2 = cv2.moments(cnt2)
@@ -467,9 +477,47 @@ def angleToTarget(img, contours):
         "center2": center2,
         "midpoint": targetCenter,
         "pixel_diff": pixelDiff,
-        "yaw_angle": angle
+        "yaw_angle": angle,
+        "contour_diff": contour_diff,
+        "c1a": c1a,
+        "c2a": c2a
     }
     return new_image, shuffleboard_data
+
+from threading import Thread
+
+class ThreadedVision:
+    def __init__(self, frame):
+        self.grip = VisionPipeline()
+        self.running = True
+        self.frame = frame
+        self.output = None
+    def start(self):
+        Thread(target=self.run, args=()).start()
+        return self
+    def run(self):
+        while self.running:
+            frame = self.frame.copy()
+            self.grip.process(frame)
+            frame = cv2.resize(frame, (320, 240), 0, 0, cv2.INTER_CUBIC)
+            self.output = angleToTarget(frame, self.grip.filter_contours_output)
+
+image_width = 640
+image_height = 480
+
+class ThreadedInput:
+    def __init__(self, cvSink):
+        self.img = np.zeros(shape=(image_height, image_width, 3), dtype=np.uint8)
+        self.cvSink = cvSink
+        self.timestamp = 0
+    def start(self):
+        Thread(target=self.run, args=()).start()
+        return self
+    def run(self):
+        while True:
+            self.timestamp, self.img = self.cvSink.grabFrame(self.img) 
+            pass
+            
 
 # ---------------------------------------- #
 #                End Our Code              #
@@ -477,7 +525,6 @@ def angleToTarget(img, contours):
 
 
 def main():
-    cv2.setUseOptimized(True)
     global configFile
 
     if len(sys.argv) >= 2:
@@ -488,21 +535,14 @@ def main():
         sys.exit(1)
 
     # start cameras
-    cameras = []
     streams = []
-
-    image_width = 640
-    image_height = 480
-
-    grip = VisionPipeline()
 
     print("Initialized vision stuff")
 
     for cameraConfig in cameraConfigs:
         # cameras.append(startCamera(cameraConfig))
-        cs, cameraCapture, _ = startCamera(cameraConfig)
+        cs, cameraCapture = startCamera(cameraConfig)
         streams.append(cs)
-        cameras.append(cameraCapture)
 
     # First camera is server
     cameraServer = streams[0]
@@ -527,23 +567,30 @@ def main():
     network_table = ninst.getTable("Shuffleboard").getSubTable("Vision")
     network_table.getEntry("connected").setValue(True)
 
+    imgetter = ThreadedInput(cvSink).start()
+    timestamp, img = imgetter.timestamp, imgetter.img
+    vis = ThreadedVision(img).start()
+    
     time.sleep(0.1)
 
     num_frames = 0
 
     while True:
+        start = time.time()
         num_frames += 1
         start = time.time()
-        timestamp, img = cvSink.grabFrame(img)
-        frame = img
+        timestamp, img = imgetter.timestamp, imgetter.img
+        vis.frame = img
 
         if timestamp == 0:
             outputStream.notifyError(cvSink.getError())
             continue
 
-        grip.process(frame)
-        frame = cv2.resize(frame, (320, 240), 0, 0, cv2.INTER_CUBIC)
-        new_image, shuffleboard_data = angleToTarget(frame, grip.filter_contours_output)
+        # grip.process(frame)
+        # frame = cv2.resize(frame, (320, 240), 0, 0, cv2.INTER_CUBIC)
+        # new_image, shuffleboard_data = angleToTarget(frame, grip.filter_contours_output)
+
+        new_image, shuffleboard_data = vis.output
 
         for name, data in shuffleboard_data.items():
            network_table.getEntry(name).setValue(data)
@@ -553,9 +600,10 @@ def main():
         outputStream.putFrame(new_image)
 
         fps = 1/(time.time() - start)
-        if num_frames % 100 == 0:
+        if num_frames % 1000 == 0:
             print(fps)
             num_frames = 0
+        time.sleep(max(1.0/30.0 - (time.time() - start), 0))
 
 if __name__ == "__main__":
     main()
