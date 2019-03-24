@@ -517,12 +517,6 @@ class ThreadedInput:
         while True:
             self.timestamp, self.img = self.cvSink.grabFrame(self.img) 
             pass
-            
-
-# ---------------------------------------- #
-#                End Our Code              #
-# ---------------------------------------- #
-
 
 def main():
     global configFile
@@ -586,10 +580,6 @@ def main():
             outputStream.notifyError(cvSink.getError())
             continue
 
-        # grip.process(frame)
-        # frame = cv2.resize(frame, (320, 240), 0, 0, cv2.INTER_CUBIC)
-        # new_image, shuffleboard_data = angleToTarget(frame, grip.filter_contours_output)
-
         new_image, shuffleboard_data = vis.output
 
         for name, data in shuffleboard_data.items():
@@ -599,11 +589,11 @@ def main():
 
         outputStream.putFrame(new_image)
 
-        fps = 1/(time.time() - start)
+        fps = 1 / (time.time() - start)
         if num_frames % 1000 == 0:
             print(fps)
             num_frames = 0
-        time.sleep(max(1.0/30.0 - (time.time() - start), 0))
+        time.sleep(max(1.0 / 30.0 - (time.time() - start), 0))
 
 if __name__ == "__main__":
     main()
