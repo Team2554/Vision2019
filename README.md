@@ -22,5 +22,7 @@ Change appropriate version in `requirements-to-freeze.txt` / `requirements-dev.t
 
 ### Understanding the code
 If anyone can understand this, they are a god.
+
 I am not going to write documentation
+
 My future self will suffer
