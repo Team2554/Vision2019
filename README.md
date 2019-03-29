@@ -9,6 +9,7 @@ All the python vision code to run on the Raspberry Pi coprocessor for all the vi
 ```
 pip install -r requirements.txt
 ```
+Actually don't do this. Just upload the file.
 
 ### Developing
 
