@@ -27,3 +27,10 @@ If anyone can understand this, they are a god.
 I am not going to write documentation
 
 My future self will suffer
+
+### Some other info
+Don't ask why I used Python
+
+Python is the best programming language when it comes to Computer Vision
+
+Also I don't need to go through the pain of compiling the code into binaries
