@@ -42,3 +42,8 @@ IMPLEMENT STUFF FROM CHICKENVISION
 https://github.com/team3997/ChickenVision/blob/master/ChickenVision.py
 
 I don't know why I didn't do this earlier. I shouldn't have ignored Neeraj
+
+#### Moar todos:
+Use angle difference between two contours to get distance to target. This can also be done the chickenvision way, whichever floats our boat.
+
+DO MOAR TRIG!!
