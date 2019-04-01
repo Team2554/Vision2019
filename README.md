@@ -34,3 +34,11 @@ Don't ask why I used Python
 Python is the best programming language when it comes to Computer Vision
 
 Also I don't need to go through the pain of compiling the code into binaries
+
+
+### VERY IMPORTANT: TODO
+IMPLEMENT STUFF FROM CHICKENVISION
+
+https://github.com/team3997/ChickenVision/blob/master/ChickenVision.py
+
+I don't know why I didn't do this earlier. I shouldn't have ignored Neeraj
