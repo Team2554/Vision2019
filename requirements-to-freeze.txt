@@ -1,4 +1,4 @@
 # Include TOP-LEVEL dependencies in this file.
 # Do NOT pipe `pip freeze` to this file.
 
-opencv-python==4.0.0.21
+opencv-python==4.1.1.26
